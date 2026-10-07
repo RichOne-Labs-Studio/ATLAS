@@ -1,0 +1,8 @@
+{
+  "name": "AuraGold AI - XAUUSD Fibonacci & MT5 Assistant",
+  "description": "Asisten trading profesional khusus XAU/USD (Gold) dengan analisis teknikal murni berbasis rasio Fibonacci, kalkulator risiko disiplin, dan integrasi MetaTrader 5 realtime via Python.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
