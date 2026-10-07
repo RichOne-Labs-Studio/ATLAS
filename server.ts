@@ -501,7 +501,7 @@ Gaya analisis Anda:
 function generatePythonBridgeScript(appUrl: string): string {
   return `"""
 =============================================================================
-AuraGold AI - MetaTrader 5 (MT5) Real-Time Python Bridge
+ATLAS (AI Trading and Live Analysis System) - MetaTrader 5 (MT5) Python Bridge
 Pasangan Target: XAU/USD (Gold)
 =============================================================================
 Panduan Singkat:
@@ -511,7 +511,7 @@ Panduan Singkat:
 3. Jalankan script ini:
    python xauusd_mt5_bridge.py
 4. Script akan otomatis mendeteksi terminal MT5 aktif, mengambil data tick &
-   candlestick M1, M5, M15, H1, H4, D1, lalu mengirimkannya realtime ke AuraGold AI Web App.
+   candlestick M1, M5, M15, M30, H1, H4, D1, lalu mengirimkannya realtime ke ATLAS Web App.
 =============================================================================
 """
 

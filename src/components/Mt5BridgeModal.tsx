@@ -14,6 +14,7 @@ import {
   Server
 } from 'lucide-react';
 import { MT5State } from '../types/trading';
+import { DEFAULT_PYTHON_BRIDGE_SCRIPT } from '../utils/defaultBridgeScript';
 
 interface Mt5BridgeModalProps {
   isOpen: boolean;
@@ -31,20 +32,25 @@ export const Mt5BridgeModal: React.FC<Mt5BridgeModalProps> = ({
   const [copiedScript, setCopiedScript] = useState(false);
   const [copiedPip, setCopiedPip] = useState(false);
   const [copiedRun, setCopiedRun] = useState(false);
-  const [scriptCode, setScriptCode] = useState<string>('');
+  const [scriptCode, setScriptCode] = useState<string>(DEFAULT_PYTHON_BRIDGE_SCRIPT);
   const [isLoadingScript, setIsLoadingScript] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setIsLoadingScript(true);
       fetch('/api/mt5/bridge-script')
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error('Not found');
+          return res.json();
+        })
         .then(data => {
-          setScriptCode(data.script || '');
+          if (data.script) {
+            setScriptCode(data.script);
+          }
           setIsLoadingScript(false);
         })
-        .catch(err => {
-          console.error(err);
+        .catch(() => {
+          // Fallback to default bundled script
           setIsLoadingScript(false);
         });
     }
