@@ -22,6 +22,8 @@ import { calculateFibonacciLevels, detectMajorSwings, getGoldenPocketBounds } fr
 import { evaluateSupportingIndicators } from './utils/indicators';
 import { playPriceAlertSound, playSuccessSound } from './utils/audioAlert';
 import { triggerBrowserNotification } from './utils/notifications';
+import { getClientSimulatedState } from './utils/clientMarketSimulator';
+import { generateClientFallbackAnalysis } from './utils/clientAiFallback';
 import { 
   ShieldAlert, 
   Sparkles, 
@@ -40,7 +42,7 @@ const ALERTS_STORAGE_KEY = 'atlas_price_alerts_v1';
 
 export default function App() {
   const [currentTimeframe, setCurrentTimeframe] = useState<Timeframe>('H1');
-  const [mt5State, setMt5State] = useState<MT5State | null>(null);
+  const [mt5State, setMt5State] = useState<MT5State | null>(() => getClientSimulatedState('H1'));
   const [aiAnalysis, setAiAnalysis] = useState<AiAnalysisResult | null>(null);
   const [isAiAnalyzing, setIsAiAnalyzing] = useState<boolean>(false);
 
@@ -111,9 +113,13 @@ export default function App() {
       if (res.ok) {
         const data: MT5State = await res.json();
         setMt5State(data);
+      } else {
+        // Fallback for static hosting like GitHub Pages
+        setMt5State(getClientSimulatedState(tf));
       }
-    } catch (err) {
-      console.error('Error fetching market state:', err);
+    } catch {
+      // Offline / Static deployment fallback
+      setMt5State(getClientSimulatedState(tf));
     }
   }, []);
 
@@ -298,14 +304,33 @@ export default function App() {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
-      if (data.success && data.analysis) {
-        setAiAnalysis(data.analysis);
-      } else {
-        throw new Error(data.error || 'Gagal menerima analisis');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.analysis) {
+          setAiAnalysis(data.analysis);
+          return;
+        }
       }
-    } catch (err: any) {
-      console.error('AI Analysis Error:', err);
+
+      // Fallback for static hosting (GitHub Pages) using client Fibonacci & indicator math
+      const fallbackAnalysis = generateClientFallbackAnalysis(
+        currentPrice,
+        currentTimeframe,
+        activeFibLevels,
+        activeGoldenPocket,
+        indicatorConfluence
+      );
+      setAiAnalysis(fallbackAnalysis);
+    } catch {
+      // Fallback for offline / static hosting (GitHub Pages)
+      const fallbackAnalysis = generateClientFallbackAnalysis(
+        currentPrice,
+        currentTimeframe,
+        activeFibLevels,
+        activeGoldenPocket,
+        indicatorConfluence
+      );
+      setAiAnalysis(fallbackAnalysis);
     } finally {
       setIsAiAnalyzing(false);
     }
