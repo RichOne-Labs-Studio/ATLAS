@@ -92,8 +92,21 @@ def find_gold_symbol():
     return "XAUUSD"
 
 def get_rates_for_timeframe(symbol, mt5_timeframe, count=120):
-    """Mengambil riwayat data candlestick OHLCV dari MT5."""
+    """Mengambil riwayat data candlestick OHLCV dari MT5 secara andal."""
+    mt5.symbol_select(symbol, True)
+    
+    # 1. Coba copy_rates_from_pos
     rates = mt5.copy_rates_from_pos(symbol, mt5_timeframe, 0, count)
+    
+    # 2. Jika None atau kosong, coba copy_rates_from (waktu saat ini)
+    if rates is None or len(rates) == 0:
+        rates = mt5.copy_rates_from(symbol, mt5_timeframe, datetime.now(), count)
+        
+    # 3. Jika masih None, beri jeda singkat untuk download cache MT5 lalu coba kembali
+    if rates is None or len(rates) == 0:
+        time.sleep(0.1)
+        rates = mt5.copy_rates_from_pos(symbol, mt5_timeframe, 0, count)
+
     if rates is None or len(rates) == 0:
         return []
     
@@ -229,7 +242,12 @@ def main():
                     res = requests.post(sync_endpoint, json=payload, timeout=4)
                     if res.status_code == 200:
                         timestamp_str = datetime.now().strftime('%H:%M:%S')
-                        print(f"[{timestamp_str}] {GREEN}[SYNC SUKSES]{RESET} {gold_symbol} Bid: {GOLD}${bid:.2f}{RESET} | Ask: ${ask:.2f} | Spread: {spread_pips:.1f} pips | 7 Timeframe Synced.")
+                        h1_count = len(candles_data.get('H1', []))
+                        if h1_count == 0:
+                            print(f"[{timestamp_str}] {RED}[PERINGATAN]{RESET} Candlestick MT5 masih 0 bar! Buka chart {gold_symbol} di jendela MT5 Anda agar MT5 mengunduh bar.")
+                        else:
+                            last_h1 = candles_data['H1'][-1]['close']
+                            print(f"[{timestamp_str}] {GREEN}[SYNC SUKSES]{RESET} {gold_symbol} Bid: {GOLD}${bid:.2f}{RESET} | H1 Close: ${last_h1:.2f} ({h1_count} bars) | Spread: {spread_pips:.1f} pips")
                     else:
                         print(f"[{datetime.now().strftime('%H:%M:%S')}] {RED}[SYNC HTTP {res.status_code}]{RESET} {res.text[:100]}")
                 except Exception as e:

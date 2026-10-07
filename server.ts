@@ -216,6 +216,17 @@ class MarketDataStore {
     }
     if (data.symbol) {
       this.symbolInfo = { ...this.symbolInfo, ...data.symbol };
+      const currentBid = this.symbolInfo.bid;
+      if (currentBid) {
+        for (const list of Object.values(this.candlesByTimeframe)) {
+          if (list && list.length > 0) {
+            const last = list[list.length - 1];
+            last.close = currentBid;
+            last.high = Math.max(last.high, currentBid);
+            last.low = Math.min(last.low, currentBid);
+          }
+        }
+      }
     }
     if (data.candles) {
       for (const [tf, candleList] of Object.entries(data.candles)) {
